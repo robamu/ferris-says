@@ -20,6 +20,6 @@ license = "MIT/Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ferris-says = "0.2"
+ferris-says = { path = ".." } # "0.2"
 clap = "2.25"
 error-chain = "0.10"

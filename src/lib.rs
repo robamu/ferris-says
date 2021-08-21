@@ -321,7 +321,7 @@ where
     std::mem::drop(mutex_guard);
     let (bottom_str, top_str, eye_gap) = match speaker {
         Speaker::Ferris => (FERRIS_BOTTOM, FERRIS_TOP, " "),
-        Speaker::Clippy => (CLIPPY_BOTTOM, CLIPPY_TOP, " "),
+        Speaker::Clippy => (CLIPPY_BOTTOM, CLIPPY_TOP, "  "),
         _ => (FERRIS_BOTTOM, FERRIS_TOP, " "),
     };
 
@@ -373,11 +373,10 @@ where
 ///           '_   -   _'
 ///           / '-----' \
 /// ```
-pub fn set_speaker(speaker: Speaker) {
-    match SPEAKER.lock() {
-        Ok(mut guard) => *guard = speaker,
-        Err(e) => println!("Error {} acquiring the Mutex for the speaker", e)
-    }
+pub fn set_speaker(speaker: &Speaker) -> Result<()> {
+    let mut mutex_guard = SPEAKER.lock().expect("Error {} acquiring the Mutex for the speaker");
+    *mutex_guard = *speaker;
+    Ok(())
 }
 
 fn longest_line(lines: &[&str]) -> usize {

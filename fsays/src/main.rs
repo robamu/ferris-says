@@ -87,6 +87,17 @@ fn run() -> Result<()> {
                     "paranoid", "crying"
                 ])
         )
+        .arg(
+            Arg::with_name("SPEAKER")
+                .long("speaker")
+                .short("t")
+                .help("Set antother speaker")
+                .takes_value(true)
+                .default_value("ferris")
+                .possible_values(&[
+                    "ferris", "clippy"
+                ])
+        )
         .get_matches();
 
     let width = args.value_of("WIDTH").unwrap().parse().chain_err(|| ARGS)?;
@@ -111,6 +122,14 @@ fn run() -> Result<()> {
         "crying" => Eyes::CryingEyes,
         _ => Eyes::RegularEyes
     };
+
+    let speaker = match args.value_of("SPEAKER").unwrap() {
+        "ferris" => Speaker::Ferris,
+        "clippy" => Speaker::Clippy,
+        _ => Speaker::Ferris
+    };
+
+    set_speaker(&speaker).expect("Could not set speaker");
 
     let cfg = FerrisConfig { mode, eyes };
 
