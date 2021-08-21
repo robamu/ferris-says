@@ -1,6 +1,8 @@
 extern crate ferris_says;
+extern crate serial_test;
 
-use ferris_says::{say, think, perform, SpeechModes, Eyes, FerrisConfig};
+use serial_test::serial;
+use ferris_says::{say, think, perform, SpeechModes, Eyes, FerrisConfig, Speaker, set_speaker};
 
 // Default width when running the binary
 const DEFAULT_WIDTH: usize = 40;
@@ -10,39 +12,29 @@ const SPEECH_BUBBLE: &str = r#"        \
 const THOUGHT_BUBBLE: &str = r#"        o
          o"#;
 
-#[cfg(not(feature = "clippy"))]
-const REGULAR_FERRIS: &str = r#"
+const FERRIS_TOP: &[u8] = br#"
             _~^~^~_
-        \) /  o o  \ (/
-          '_   -   _'
-          / '-----' \
-"#;
-#[cfg(not(feature = "clippy"))]
-const HAPPY_FERRIS: &str = r#"
-            _~^~^~_
-        \) /  ^ ^  \ (/
+        \) /  "#;
+const FERRIS_BOTTOM: &[u8] = br#"  \ (/
           '_   -   _'
           / '-----' \
 "#;
 
-#[cfg (feature = "clippy")]
-const REGULAR_CLIPPY: &str = r#"
-            __
-           /  \
-           |  |
-           o  o
-           |  |
-           || |/
-           || ||
-           |\_/|
-           \___/
+const COW_TOP: &[u8] = br#"
+            ^__^
+            ("#;
+const COW_BOTTOM: &[u8] = br#")\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
 "#;
-#[cfg (feature = "clippy")]
-const HAPPY_CLIPPY: &str = r#"
+
+const CLIPPY_TOP: &[u8] = br#"
             __
            /  \
            |  |
-           ^  ^
+           "#;
+const CLIPPY_BOTTOM: &[u8] = br#"
            |  |
            || |/
            || ||
@@ -51,6 +43,7 @@ const HAPPY_CLIPPY: &str = r#"
 "#;
 
 #[test]
+#[serial]
 fn hello_fellow_rustaceans_width_24() -> Result<(), ()> {
     //Hello fellow Rustaceans!
     let speech = String::from(concat!(
@@ -58,35 +51,14 @@ fn hello_fellow_rustaceans_width_24() -> Result<(), ()> {
         "< Hello fellow Rustaceans! >\n",
         " --------------------------\n",
     ));
-    let (expected_say, expected_think) = create_regular_ferris(speech.clone());
-
     let input = b"Hello fellow Rustaceans!";
     let width = 24;
-
-    let say = FerrisConfig {
-        mode: SpeechModes::Say,
-        eyes: Eyes::RegularEyes
-    };
-    let think = FerrisConfig {
-        mode: SpeechModes::Think,
-        eyes: Eyes::RegularEyes
-    };
-
-    compare_strings_perform(input, width, &expected_say.as_bytes(), &say);
-    compare_strings_perform(input, width, &expected_think.as_bytes(), &think);
-
-    let (happy_say, happy_think) = create_happy_ferris(speech.clone());
-
-    compare_strings_say_think(
-        input, width, &happy_say.as_bytes(), &SpeechModes::Say, &Eyes::HappyEyes
-    );
-    compare_strings_say_think(
-        input, width, &happy_think.as_bytes(), &SpeechModes::Think, &Eyes::HappyEyes
-    );
+    generic_tests(speech, width, input);
     Ok(())
 }
 
 #[test]
+#[serial]
 fn hello_fellow_rustaceans_width_12() -> Result<(), ()> {
     //Hello fellow Rustaceans!
     let speech = String::from(concat!(
@@ -95,35 +67,14 @@ fn hello_fellow_rustaceans_width_12() -> Result<(), ()> {
         "\\ Rustaceans!  /\n",
         " --------------\n"
     ));
-    let (expected_say, expected_think) = create_regular_ferris(speech.clone());
-
     let input = b"Hello fellow Rustaceans!";
     let width = 12;
-
-    let say = FerrisConfig {
-        mode: SpeechModes::Say,
-        eyes: Eyes::RegularEyes
-    };
-    let think = FerrisConfig {
-        mode: SpeechModes::Think,
-        eyes: Eyes::RegularEyes
-    };
-
-    compare_strings_perform(input, width, &expected_say.as_bytes(), &say);
-    compare_strings_perform(input, width, &expected_think.as_bytes(), &think);
-
-    let (happy_say, happy_think) = create_happy_ferris(speech.clone());
-
-    compare_strings_say_think(
-        input, width, &happy_say.as_bytes(), &SpeechModes::Say, &Eyes::HappyEyes
-    );
-    compare_strings_say_think(
-        input, width, &happy_think.as_bytes(), &SpeechModes::Think, &Eyes::HappyEyes
-    );
+    generic_tests(speech, width, input);
     Ok(())
 }
 
 #[test]
+#[serial]
 fn hello_fellow_rustaceans_width_6() -> Result<(), ()> {
     let speech = String::from(concat!(
         " ________\n",
@@ -133,35 +84,14 @@ fn hello_fellow_rustaceans_width_6() -> Result<(), ()> {
         "\\ eans!  /\n",
         " --------\n"
     ));
-    let (expected_say, expected_think) = create_regular_ferris(speech.clone());
-
     let input = b"Hello fellow Rustaceans!";
     let width = 6;
-
-    let say = FerrisConfig {
-        mode: SpeechModes::Say,
-        eyes: Eyes::RegularEyes
-    };
-    let think = FerrisConfig {
-        mode: SpeechModes::Think,
-        eyes: Eyes::RegularEyes
-    };
-
-    compare_strings_perform(input, width, &expected_say.as_bytes(), &say);
-    compare_strings_perform(input, width, &expected_think.as_bytes(), &think);
-
-    let (happy_say, happy_think) = create_happy_ferris(speech.clone());
-
-    compare_strings_say_think(
-        input, width, &happy_say.as_bytes(), &SpeechModes::Say, &Eyes::HappyEyes
-    );
-    compare_strings_say_think(
-        input, width, &happy_think.as_bytes(), &SpeechModes::Think, &Eyes::HappyEyes
-    );
+    generic_tests(speech, width, input);
     Ok(())
 }
 
 #[test]
+#[serial]
 fn hello_fellow_rustaceans_width_3() -> Result<(), ()> {
     //Hello fellow Rustaceans!
     let speech = String::from(concat!(
@@ -176,35 +106,15 @@ fn hello_fellow_rustaceans_width_3() -> Result<(), ()> {
         "\\ s!  /\n",
         " -----\n"
     ));
-    let (expected_say, expected_think) = create_regular_ferris(speech.clone());
 
     let input = b"Hello fellow Rustaceans!";
     let width = 3;
-
-    let say = FerrisConfig {
-        mode: SpeechModes::Say,
-        eyes: Eyes::RegularEyes
-    };
-    let think = FerrisConfig {
-        mode: SpeechModes::Think,
-        eyes: Eyes::RegularEyes
-    };
-
-    compare_strings_perform(input, width, &expected_say.as_bytes(), &say);
-    compare_strings_perform(input, width, &expected_think.as_bytes(), &think);
-
-    let (happy_say, happy_think) = create_happy_ferris(speech.clone());
-
-    compare_strings_say_think(
-        input, width, &happy_say.as_bytes(), &SpeechModes::Say, &Eyes::HappyEyes
-    );
-    compare_strings_say_think(
-        input, width, &happy_think.as_bytes(), &SpeechModes::Think, &Eyes::HappyEyes
-    );
+    generic_tests(speech, width, input);
     Ok(())
 }
 
 #[test]
+#[serial]
 fn multibyte_string() -> Result<(), ()> {
     //Hello fellow Rustaceans!
     let speech = String::from(concat!(
@@ -212,72 +122,36 @@ fn multibyte_string() -> Result<(), ()> {
         "< 突然の死👻 >\n",
         " ------------\n"
     ));
-    let (expected_say, expected_think) = create_regular_ferris(speech.clone());
-
     let input = "突然の死👻";
     let width = DEFAULT_WIDTH;
-
-    let say = FerrisConfig {
-        mode: SpeechModes::Say,
-        eyes: Eyes::RegularEyes
-    };
-    let think = FerrisConfig {
-        mode: SpeechModes::Think,
-        eyes: Eyes::RegularEyes
-    };
-
-    compare_strings_perform(input.as_bytes(), width, &expected_say.as_bytes(), &say);
-    compare_strings_perform(input.as_bytes(), width, &expected_think.as_bytes(), &think);
-
-    let (happy_say, happy_think) = create_happy_ferris(speech);
-
-    compare_strings_say_think(
-        input.as_bytes(), width, &happy_say.as_bytes(), &SpeechModes::Say, &Eyes::HappyEyes
-    );
-    compare_strings_say_think(
-        input.as_bytes(), width, &happy_think.as_bytes(), &SpeechModes::Think, &Eyes::HappyEyes
-    );
+    generic_tests(speech, width, input.as_bytes());
     Ok(())
 }
 
-fn create_regular_ferris(speech: String) -> (String, String) {
-    #[cfg(not(feature = "clippy"))]
-    let expected_say = speech.clone() + SPEECH_BUBBLE + REGULAR_FERRIS;
-    #[cfg(not(feature = "clippy"))]
-    let expected_think = speech + THOUGHT_BUBBLE + REGULAR_FERRIS;
-
-    #[cfg(feature = "clippy")]
-    let expected_say = speech.clone() + SPEECH_BUBBLE + REGULAR_CLIPPY;
-    #[cfg(feature = "clippy")]
-    let expected_think = speech + THOUGHT_BUBBLE + REGULAR_CLIPPY;
-    (expected_say, expected_think)
-}
-
-fn create_happy_ferris(speech: String) -> (String, String) {
-    #[cfg(not(feature = "clippy"))]
-    let expected_say = speech.clone() + SPEECH_BUBBLE + HAPPY_FERRIS;
-    #[cfg(not(feature = "clippy"))]
-    let expected_think = speech + THOUGHT_BUBBLE + HAPPY_FERRIS;
-
-    #[cfg(feature = "clippy")]
-    let expected_say = speech.clone() + SPEECH_BUBBLE + HAPPY_CLIPPY;
-    #[cfg(feature = "clippy")]
-    let expected_think = speech + THOUGHT_BUBBLE + HAPPY_CLIPPY;
+fn create_ferris(
+    speech: String, top_part: &str, eye: &str, eye_gap: &str, bottom_part: &str
+) -> (String, String) {
+    let expected_say = speech.clone() + SPEECH_BUBBLE + top_part + eye +  eye_gap + eye + bottom_part;
+    let expected_think = speech.clone() + THOUGHT_BUBBLE + top_part + eye +  eye_gap + eye + bottom_part;
     (expected_say, expected_think)
 }
 
 fn compare_strings_perform(
-    input: &[u8], width: usize, expected: &[u8], cfg: &FerrisConfig
+    input: &[u8], width: usize, expected: &[u8], speaker: Speaker, cfg: &FerrisConfig
 ) {
+    set_speaker(&speaker).unwrap();
     let mut vec = Vec::new();
     perform(input, width, &mut vec, cfg).unwrap();
     let actual = std::str::from_utf8(&vec).unwrap();
+    println!("{}", std::str::from_utf8(&expected).unwrap());
+    println!("{}", actual);
     assert_eq!(std::str::from_utf8(&expected).unwrap(), actual);
 }
 
 fn compare_strings_say_think(
-    input: &[u8], width: usize, expected: &[u8], mode: &SpeechModes, eyes: &Eyes)
+    input: &[u8], width: usize, expected: &[u8],  speaker: Speaker, mode: &SpeechModes,eyes: &Eyes)
 {
+    set_speaker(&speaker).unwrap();
     let mut vec = Vec::new();
     match mode {
         SpeechModes::Say => {
@@ -288,5 +162,83 @@ fn compare_strings_say_think(
         }
     };
     let actual = std::str::from_utf8(&vec).unwrap();
+    println!("{}", std::str::from_utf8(&expected).unwrap());
+    println!("{}", actual);
     assert_eq!(std::str::from_utf8(&expected).unwrap(), actual);
+}
+
+fn generic_tests(speech: String, width: usize, input: &[u8]) {
+    let top_ferris = std::str::from_utf8(FERRIS_TOP).unwrap();
+    let bottom_ferris = std::str::from_utf8(FERRIS_BOTTOM).unwrap();
+    let top_clippy = std::str::from_utf8(CLIPPY_TOP).unwrap();
+    let bottom_clippy = std::str::from_utf8(CLIPPY_BOTTOM).unwrap();
+    let top_cow = std::str::from_utf8(COW_TOP).unwrap();
+    let bottom_cow = std::str::from_utf8(COW_BOTTOM).unwrap();
+    let (expected_say, expected_think) = create_ferris(
+        speech.clone(), top_ferris, "o", " ", bottom_ferris
+    );
+    let (happy_say, happy_think) = create_ferris(
+        speech.clone(), top_ferris, "^", " ", bottom_ferris
+    );
+    let (expected_say_clippy, expected_think_clippy) = create_ferris(
+        speech.clone(), top_clippy, "o", "  ", bottom_clippy
+    );
+    let (happy_say_clippy, happy_think_clippy) = create_ferris(
+        speech.clone(), top_clippy, "^", "  ", bottom_clippy
+    );
+    let (expected_say_cow, expected_think_cow) = create_ferris(
+        speech.clone(), top_cow, "o", "", bottom_cow
+    );
+    let (happy_say_cow, happy_think_cow) = create_ferris(
+        speech.clone(), top_cow, "^", "", bottom_cow
+    );
+    let say = FerrisConfig {
+        mode: SpeechModes::Say,
+        eyes: Eyes::RegularEyes
+    };
+    let think = FerrisConfig {
+        mode: SpeechModes::Think,
+        eyes: Eyes::RegularEyes
+    };
+
+    compare_strings_perform(input, width, &expected_say.as_bytes(), Speaker::Ferris, &say);
+    compare_strings_perform(input, width, &expected_think.as_bytes(), Speaker::Ferris, &think);
+    compare_strings_say_think(
+        input, width, &happy_say.as_bytes(), Speaker::Ferris, &SpeechModes::Say,
+        &Eyes::HappyEyes
+    );
+    compare_strings_say_think(
+        input, width, &happy_think.as_bytes(), Speaker::Ferris, &SpeechModes::Think,
+        &Eyes::HappyEyes
+    );
+
+    compare_strings_perform(
+        input, width, &expected_say_clippy.as_bytes(), Speaker::Clippy, &say)
+        ;
+    compare_strings_perform(
+        input, width, &expected_think_clippy.as_bytes(), Speaker::Clippy, &think
+    );
+    compare_strings_say_think(
+        input, width, &happy_say_clippy.as_bytes(), Speaker::Clippy, &SpeechModes::Say,
+        &Eyes::HappyEyes
+    );
+    compare_strings_say_think(
+        input, width, &happy_think_clippy.as_bytes(), Speaker::Clippy, &SpeechModes::Think,
+        &Eyes::HappyEyes
+    );
+
+    compare_strings_perform(
+        input, width, &expected_say_cow.as_bytes(), Speaker::Cow, &say)
+        ;
+    compare_strings_perform(
+        input, width, &expected_think_cow.as_bytes(), Speaker::Cow, &think
+    );
+    compare_strings_say_think(
+        input, width, &happy_say_cow.as_bytes(), Speaker::Cow, &SpeechModes::Say,
+        &Eyes::HappyEyes
+    );
+    compare_strings_say_think(
+        input, width, &happy_think_cow.as_bytes(), Speaker::Cow, &SpeechModes::Think,
+        &Eyes::HappyEyes
+    );
 }
