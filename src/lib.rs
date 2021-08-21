@@ -351,7 +351,7 @@ where
 /// let out = b"Hello fellow Rustaceans!";
 /// let width = 24;
 ///
-/// set_speaker(Speaker::Clippy);
+/// set_speaker(&Speaker::Clippy);
 /// let mut writer = BufWriter::new(stdout.lock());
 /// let ferris_cfg = FerrisConfig {
 ///     mode: SpeechModes::Think,
