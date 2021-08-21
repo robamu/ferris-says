@@ -67,6 +67,16 @@ const FERRIS_BOTTOM: &[u8] = br#"  \ (/
           / '-----' \
 "#;
 
+const COW_TOP: &[u8] = br#"
+            ^__^
+            ("#;
+        
+const COW_BOTTOM: &[u8] = br#")\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+"#;
+
 const CLIPPY_TOP: &[u8] = br#"
             __
            /  \
@@ -322,7 +332,7 @@ where
     let (bottom_str, top_str, eye_gap) = match speaker {
         Speaker::Ferris => (FERRIS_BOTTOM, FERRIS_TOP, " "),
         Speaker::Clippy => (CLIPPY_BOTTOM, CLIPPY_TOP, "  "),
-        _ => (FERRIS_BOTTOM, FERRIS_TOP, " "),
+        Speaker::Cow => (COW_BOTTOM, COW_TOP, ""),
     };
 
     write_buffer.extend_from_slice(top_str);

@@ -20,6 +20,17 @@ const FERRIS_BOTTOM: &[u8] = br#"  \ (/
           / '-----' \
 "#;
 
+const COW_TOP: &[u8] = br#"
+            ^__^
+            ("#;
+        
+const COW_BOTTOM: &[u8] = br#"
+               )\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+"#;
+
 const CLIPPY_TOP: &[u8] = br#"
             __
            /  \

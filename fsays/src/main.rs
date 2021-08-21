@@ -95,7 +95,7 @@ fn run() -> Result<()> {
                 .takes_value(true)
                 .default_value("ferris")
                 .possible_values(&[
-                    "ferris", "clippy"
+                    "ferris", "clippy", "cow"
                 ])
         )
         .get_matches();
@@ -126,6 +126,7 @@ fn run() -> Result<()> {
     let speaker = match args.value_of("SPEAKER").unwrap() {
         "ferris" => Speaker::Ferris,
         "clippy" => Speaker::Clippy,
+        "cow" => Speaker::Cow,
         _ => Speaker::Ferris
     };
 
