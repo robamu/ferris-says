@@ -31,6 +31,7 @@ clippy = []
 smallvec = "0.4"
 textwrap = "0.13"
 unicode-width = "0.1.7"
+lazy_static = "1.4.0"
 
 [workspace]
 members = ["fsays"]

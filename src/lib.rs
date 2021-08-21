@@ -1,13 +1,28 @@
 extern crate smallvec;
 extern crate textwrap;
 extern crate unicode_width;
+extern crate lazy_static;
 
 use smallvec::*;
 use std::io::{Result, Write};
 use std::iter::repeat;
 use std::str;
+use std::sync::Mutex;
 use textwrap::fill;
 use unicode_width::UnicodeWidthStr;
+use lazy_static::lazy_static;
+
+#[derive(Copy, Clone)]
+pub enum Speaker {
+    Ferris,
+    Clippy,
+    Cow
+}
+
+
+lazy_static! {
+    static ref SPEAKER: Mutex<Speaker> = Mutex::new(Speaker::Ferris);
+}
 
 #[derive(Copy, Clone)]
 pub enum SpeechModes {
@@ -44,23 +59,19 @@ const TIRED_EYES: &[u8] = b"-";
 const CRYING_EYES: &[u8] = b"T";
 const HAPPY_EYES: &[u8] = b"^";
 
-#[cfg(not(feature = "clippy"))]
 const FERRIS_TOP: &[u8] = br#"
             _~^~^~_
         \) /  "#;
-#[cfg(not(feature = "clippy"))]
 const FERRIS_BOTTOM: &[u8] = br#"  \ (/
           '_   -   _'
           / '-----' \
 "#;
 
-#[cfg(feature = "clippy")]
 const CLIPPY_TOP: &[u8] = br#"
             __
            /  \
            |  |
            "#;
-#[cfg(feature = "clippy")]
 const CLIPPY_BOTTOM: &[u8] = br#"
            |  |
            || |/
@@ -305,27 +316,68 @@ where
         Eyes::HappyEyes => HAPPY_EYES,
     };
 
-    #[cfg(feature = "clippy")]
-    let eye_gap = b"  ";
-    #[cfg(not(feature = "clippy"))]
-    let eye_gap = b" ";
+    let mutex_guard = SPEAKER.lock().expect("Could not retrieve speaker");
+    let speaker = *mutex_guard;
+    std::mem::drop(mutex_guard);
+    let (bottom_str, top_str, eye_gap) = match speaker {
+        Speaker::Ferris => (FERRIS_BOTTOM, FERRIS_TOP, " "),
+        Speaker::Clippy => (CLIPPY_BOTTOM, CLIPPY_TOP, " "),
+        _ => (FERRIS_BOTTOM, FERRIS_TOP, " "),
+    };
 
-    #[cfg(feature = "clippy")]
-    write_buffer.extend_from_slice(CLIPPY_TOP);
-    #[cfg(not(feature = "clippy"))]
-    write_buffer.extend_from_slice(FERRIS_TOP);
-
+    write_buffer.extend_from_slice(top_str);
     write_buffer.extend_from_slice(eye);
-    write_buffer.extend_from_slice(eye_gap);
+    write_buffer.extend_from_slice(eye_gap.as_bytes());
     write_buffer.extend_from_slice(eye);
+    write_buffer.extend_from_slice(bottom_str);
 
-    #[cfg(feature = "clippy")]
-    write_buffer.extend_from_slice(CLIPPY_BOTTOM);
-    #[cfg(not(feature = "clippy"))]
-    write_buffer.extend_from_slice(FERRIS_BOTTOM);
     writer.write_all(&write_buffer)?;
-
     Ok(())
+}
+
+/// Ferris has some friends and they can say something as well
+///
+/// `speaker` One of Ferris friends
+///
+/// # Example
+///
+/// The following bit of code makes Clippy say something
+///
+/// ```rust
+/// use ferris_says::*;
+/// use std::io::{ stdout, BufWriter };
+///
+/// let stdout = stdout();
+/// let out = b"Hello fellow Rustaceans!";
+/// let width = 24;
+///
+/// set_speaker(Speaker::Clippy);
+/// let mut writer = BufWriter::new(stdout.lock());
+/// let ferris_cfg = FerrisConfig {
+///     mode: SpeechModes::Think,
+///     eyes: Eyes::HappyEyes
+/// };
+/// perform(out, width, &mut writer, &ferris_cfg).unwrap();
+/// ```
+///
+/// This will print out:
+///
+/// ```plain
+///  __________________________
+/// < Hello fellow Rustaceans! >
+///  --------------------------
+///         o
+///          o
+///             _~^~^~_
+///         \) /  ^ ^  \ (/
+///           '_   -   _'
+///           / '-----' \
+/// ```
+pub fn set_speaker(speaker: Speaker) {
+    match SPEAKER.lock() {
+        Ok(mut guard) => *guard = speaker,
+        Err(e) => println!("Error {} acquiring the Mutex for the speaker", e)
+    }
 }
 
 fn longest_line(lines: &[&str]) -> usize {
