@@ -24,8 +24,7 @@ const COW_TOP: &[u8] = br#"
             ^__^
             ("#;
         
-const COW_BOTTOM: &[u8] = br#"
-               )\_______
+const COW_BOTTOM: &[u8] = br#")\_______
             (__)\       )\/\
                 ||----w |
                 ||     ||
@@ -174,6 +173,8 @@ fn generic_tests(speech: String, width: usize, input: &[u8]) {
     let bottom_ferris = std::str::from_utf8(FERRIS_BOTTOM).unwrap();
     let top_clippy = std::str::from_utf8(CLIPPY_TOP).unwrap();
     let bottom_clippy = std::str::from_utf8(CLIPPY_BOTTOM).unwrap();
+    let top_cow = std::str::from_utf8(COW_TOP).unwrap();
+    let bottom_cow = std::str::from_utf8(COW_BOTTOM).unwrap();
     let (expected_say, expected_think) = create_ferris(
         speech.clone(), top_ferris, "o", " ", bottom_ferris
     );
@@ -185,6 +186,12 @@ fn generic_tests(speech: String, width: usize, input: &[u8]) {
     );
     let (happy_say_clippy, happy_think_clippy) = create_ferris(
         speech.clone(), top_clippy, "^", "  ", bottom_clippy
+    );
+    let (expected_say_cow, expected_think_cow) = create_ferris(
+        speech.clone(), top_cow, "o", "", bottom_cow
+    );
+    let (happy_say_cow, happy_think_cow) = create_ferris(
+        speech.clone(), top_cow, "^", "", bottom_cow
     );
     let say = FerrisConfig {
         mode: SpeechModes::Say,
@@ -218,6 +225,21 @@ fn generic_tests(speech: String, width: usize, input: &[u8]) {
     );
     compare_strings_say_think(
         input, width, &happy_think_clippy.as_bytes(), Speaker::Clippy, &SpeechModes::Think,
+        &Eyes::HappyEyes
+    );
+
+    compare_strings_perform(
+        input, width, &expected_say_cow.as_bytes(), Speaker::Cow, &say)
+        ;
+    compare_strings_perform(
+        input, width, &expected_think_cow.as_bytes(), Speaker::Cow, &think
+    );
+    compare_strings_say_think(
+        input, width, &happy_say_cow.as_bytes(), Speaker::Cow, &SpeechModes::Say,
+        &Eyes::HappyEyes
+    );
+    compare_strings_say_think(
+        input, width, &happy_think_cow.as_bytes(), Speaker::Cow, &SpeechModes::Think,
         &Eyes::HappyEyes
     );
 }
