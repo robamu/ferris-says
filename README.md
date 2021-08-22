@@ -2,6 +2,15 @@
 
 A library for printing out text with Ferris as the mascot!
 
+## Build for the Q7S
+
+Make sure to add the cross-compiler binary path to the environment path and then run
+the following command to build `fsays` for the Q7S:
+
+```sh
+cargo build -p fsays --target armv7-unknown-linux-gnueabihf --release
+```
+
 ## Build requirements
 
 You only need a stable version of the Rust compiler.
